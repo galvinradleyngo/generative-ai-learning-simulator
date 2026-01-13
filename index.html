@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>How Generative AI Works - Interactive Simulator</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -19,17 +15,9 @@
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            color: white;
-        }
+        .header { text-align: center; margin-bottom: 40px; color: white; }
 
         .header h1 {
             font-size: clamp(2rem, 5vw, 3.5rem);
@@ -38,551 +26,131 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
-        .header p {
-            font-size: clamp(1rem, 2.5vw, 1.2rem);
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        .header p { font-size: clamp(1rem, 2.5vw, 1.2rem); opacity: 0.9; max-width: 600px; margin: 0 auto; }
 
         .simulator {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            overflow: hidden;
-            margin-bottom: 40px;
+            background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden; margin-bottom: 40px;
         }
 
         .question-section {
-            padding: 40px;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 40px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             border-bottom: 1px solid #e2e8f0;
         }
 
-        .question-section h2 {
-            color: #1e293b;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-        }
+        .question-section h2 { color: #1e293b; margin-bottom: 20px; font-size: 1.5rem; }
 
         .question-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px; margin-bottom: 20px;
         }
 
         .question-btn {
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-            padding: 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer;
+            font-size: 1rem; font-weight: 500; transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            text-align: left;
         }
 
-        .question-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-        }
+        .question-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59,130,246,0.4); }
+        .question-btn:active { transform: translateY(0); }
 
-        .question-btn:active {
-            transform: translateY(0);
-        }
+        .processing-section { padding: 40px; display: none; }
+        .processing-section.active { display: block; }
 
-        .processing-section {
-            padding: 40px;
-            display: none;
-        }
+        .step { margin-bottom: 30px; opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
+        .step.active { opacity: 1; transform: translateY(0); }
 
-        .processing-section.active {
-            display: block;
-        }
-
-        .step {
-            margin-bottom: 30px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.6s ease;
-        }
-
-        .step.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .step-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
+        .step-header { display:flex; align-items:center; margin-bottom:15px; }
         .step-number {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white; border-radius: 50%; display:flex; align-items:center; justify-content:center;
+            font-weight:bold; margin-right: 15px; box-shadow: 0 4px 15px rgba(16,185,129,0.3);
         }
+        .step-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
 
-        .step-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #1e293b;
-        }
+        .step-content { background: #f8fafc; border-radius: 12px; padding: 20px; border-left: 4px solid #10b981; }
 
-        .step-content {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 4px solid #10b981;
-        }
+        .neural-network { display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:wrap; gap:15px; }
+        .layer { display:flex; flex-direction:column; align-items:center; flex:1; min-width:80px; }
+        .layer-title { font-size: 0.8rem; color:#64748b; margin-bottom:10px; text-align:center; }
+        .nodes { display:flex; flex-direction:column; gap:8px; }
+        .node { width:20px; height:20px; background:#cbd5e1; border-radius:50%; transition: all .3s ease; }
+        .node.active { background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); box-shadow: 0 0 15px rgba(245,158,11,0.5); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
-        .neural-network {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+        .arrows { display:flex; flex-direction:column; gap:8px; opacity:0.3; transition: opacity .3s ease; }
+        .arrows.active { opacity: 1; }
+        .arrow { width:30px; height:2px; background:#3b82f6; position:relative; }
+        .arrow::after { content:''; position:absolute; right:-5px; top:-3px; width:0; height:0; border-left:8px solid #3b82f6; border-top:4px solid transparent; border-bottom:4px solid transparent; }
 
-        .layer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            min-width: 80px;
-        }
-
-        .layer-title {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .nodes {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .node {
-            width: 20px;
-            height: 20px;
-            background: #cbd5e1;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .node.active {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-
-        .arrows {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            opacity: 0.3;
-            transition: opacity 0.3s ease;
-        }
-
-        .arrows.active {
-            opacity: 1;
-        }
-
-        .arrow {
-            width: 30px;
-            height: 2px;
-            background: #3b82f6;
-            position: relative;
-        }
-
-        .arrow::after {
-            content: '';
-            position: absolute;
-            right: -5px;
-            top: -3px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid #3b82f6;
-            border-top: 4px solid transparent;
-            border-bottom: 4px solid transparent;
-        }
-
-        .tokens-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 15px 0;
-        }
-
+        .tokens-container { display:flex; flex-wrap:wrap; gap:8px; margin:15px 0; }
         .token {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            opacity: 0;
-            transform: scale(0);
-            animation: tokenAppear 0.5s ease forwards;
+            background: linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%); color:white; padding:6px 12px; border-radius:20px;
+            font-size:0.9rem; font-weight:500; opacity:0; transform:scale(0); animation: tokenAppear 0.5s ease forwards;
         }
+        @keyframes tokenAppear { to { opacity:1; transform:scale(1); } }
 
-        @keyframes tokenAppear {
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
+        .probability-bars { margin:20px 0; }
+        .prob-item { display:flex; align-items:center; margin-bottom:10px; }
+        .prob-word { width:80px; font-size:0.9rem; font-weight:500; }
+        .prob-bar { flex:1; height:20px; background:#e2e8f0; border-radius:10px; overflow:hidden; margin:0 10px; }
+        .prob-fill { height:100%; background: linear-gradient(135deg,#06b6d4 0%,#0891b2 100%); border-radius:10px; width:0; transition: width 1s ease; }
+        .prob-percentage { font-size:0.8rem; color:#64748b; min-width:40px; }
 
-        .probability-bars {
-            margin: 20px 0;
-        }
+        .response-box { background:white; border-radius:12px; padding:25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left:4px solid #10b981; margin-top:20px; }
+        .response-text { font-size:1.1rem; line-height:1.6; color:#1e293b; margin:0; min-height:1.2rem; }
 
-        .prob-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .prob-word {
-            width: 80px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .prob-bar {
-            flex: 1;
-            height: 20px;
-            background: #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 0 10px;
-        }
-
-        .prob-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-            border-radius: 10px;
-            width: 0;
-            transition: width 1s ease;
-        }
-
-        .prob-percentage {
-            font-size: 0.8rem;
-            color: #64748b;
-            min-width: 40px;
-        }
-
-        .response-box {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-left: 4px solid #10b981;
-            margin-top: 20px;
-        }
-
-        .response-text {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: #1e293b;
-            margin: 0;
-            min-height: 1.2rem;
-        }
-
-        .typing-indicator {
-            display: inline-block;
-            width: 4px;
-            height: 1.2rem;
-            background: #10b981;
-            animation: blink 1s infinite;
-            margin-left: 2px;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
+        .typing-indicator { display:inline-block; width:4px; height:1.2rem; background:#10b981; animation: blink 1s infinite; margin-left:2px; }
+        @keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
 
         .controls-section {
-            padding: 40px;
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-            border-top: 1px solid #e2e8f0;
-            display: none;
-            text-align: center;
+            padding:40px; background: linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%); border-top:1px solid #e2e8f0;
+            display:none; text-align:center;
         }
-
-        .controls-section.active {
-            display: block;
-        }
-
-        .navigation-controls {
-            margin-bottom: 20px;
-        }
+        .controls-section.active { display:block; }
+        .navigation-controls { margin-bottom:20px; }
 
         .nav-btn {
-            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+            background: linear-gradient(135deg,#64748b 0%,#475569 100%); color:white; border:none; padding:12px 24px; border-radius:10px;
+            cursor:pointer; font-size:1rem; font-weight:500; margin:0 10px; transition: all .3s ease; box-shadow: 0 4px 15px rgba(100,116,139,0.3);
         }
-
-        .nav-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);
-        }
-
-        .nav-btn:disabled {
-            background: #e2e8f0;
-            color: #94a3b8;
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-        }
+        .nav-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(100,116,139,0.4); }
+        .nav-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; box-shadow:none; transform:none; }
 
         .restart-btn {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg,#6366f1 0%,#4f46e5 100%); color:white; border:none; padding:15px 30px; border-radius:10px;
+            cursor:pointer; font-size:1rem; font-weight:500; margin-top:20px; transition: all .3s ease; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
         }
+        .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
 
-        .restart-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-        }
+        .info-section { background:white; border-radius:20px; padding:40px; box-shadow:0 20px 60px rgba(0,0,0,0.1); }
+        .info-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap:30px; }
+        .info-card { background: linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%); border-radius:15px; padding:25px; transition: transform .3s ease; }
+        .info-card:hover { transform: translateY(-5px); }
+        .info-card h3 { color:#1e293b; margin-bottom:15px; font-size:1.3rem; }
+        .info-card p { color:#64748b; line-height:1.6; }
 
-        .info-section {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .info-card {
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-radius: 15px;
-            padding: 25px;
-            transition: transform 0.3s ease;
-        }
-
-        .info-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .info-card h3 {
-            color: #1e293b;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-
-        .info-card p {
-            color: #64748b;
-            line-height: 1.6;
-        }
-
-        .footer {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: white;
-            margin-top: 40px;
-            border-radius: 20px;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .footer-content {
-            padding: 40px;
-        }
-
+        .footer { background: linear-gradient(135deg,#1e293b 0%,#334155 100%); color:white; margin-top:40px; border-radius:20px; overflow:hidden; text-align:center; }
+        .footer-content { padding:40px; }
         .show-references-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-            margin-top: 30px;
+            background: linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%); color:white; border:none; padding:15px 30px; border-radius:12px; cursor:pointer;
+            font-size:1rem; font-weight:500; transition: all .3s ease; box-shadow: 0 4px 15px rgba(59,130,246,0.3); margin-top:30px;
         }
-
-        .show-references-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-        }
-
-        .references-section {
-            display: none;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        .references-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .footer h3 {
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-            color: #f1f5f9;
-        }
-
-        .references-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .reference-category {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .reference-category h4 {
-            color: #93c5fd;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-
-        .reference-category ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .reference-category li {
-            margin-bottom: 12px;
-            padding-left: 15px;
-            position: relative;
-            line-height: 1.5;
-            color: #e2e8f0;
-        }
-
-        .reference-category li::before {
-            content: "•";
-            color: #60a5fa;
-            position: absolute;
-            left: 0;
-            font-weight: bold;
-        }
-
-        .reference-category a {
-            color: #60a5fa;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .reference-category a:hover {
-            color: #93c5fd;
-            text-decoration: underline;
-        }
-
-        .footer-note {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 4px solid #60a5fa;
-            text-align: center;
-        }
-
-        .footer-note p {
-            margin-bottom: 10px;
-            color: #cbd5e1;
-            line-height: 1.6;
-        }
-
-        .footer-note .copyright {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            margin-bottom: 0;
-        }
+        .references-section { display:none; animation: fadeIn .5s ease-in-out; }
+        .references-section.active { display:block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .question-section, .processing-section, .controls-section {
-                padding: 25px;
-            }
-            
-            .neural-network {
-                justify-content: center;
-            }
-            
-            .layer {
-                margin: 0 10px;
-            }
-            
-            .arrows {
-                display: none;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .references-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .footer-content {
-                padding: 25px;
-            }
+            .container { padding:15px; }
+            .question-section, .processing-section, .controls-section { padding:25px; }
+            .neural-network { justify-content:center; }
+            .layer { margin: 0 10px; }
+            .arrows { display:none; }
+            .info-grid { grid-template-columns:1fr; }
+            .references-grid { grid-template-columns:1fr; }
+            .footer-content { padding:25px; }
         }
     </style>
 </head>
@@ -632,58 +200,34 @@
                             <div class="layer">
                                 <div class="layer-title">Input Layer</div>
                                 <div class="nodes">
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
+                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
                                 </div>
                             </div>
                             <div class="arrows">
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
+                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
                             </div>
                             <div class="layer">
                                 <div class="layer-title">Hidden Layer 1</div>
                                 <div class="nodes">
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
+                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
                                 </div>
                             </div>
                             <div class="arrows">
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
+                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
                             </div>
                             <div class="layer">
                                 <div class="layer-title">Hidden Layer 2</div>
                                 <div class="nodes">
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
+                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
                                 </div>
                             </div>
                             <div class="arrows">
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
-                                <div class="arrow"></div>
+                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
                             </div>
                             <div class="layer">
                                 <div class="layer-title">Output Layer</div>
                                 <div class="nodes">
-                                    <div class="node"></div>
-                                    <div class="node"></div>
-                                    <div class="node"></div>
+                                    <div class="node"></div><div class="node"></div><div class="node"></div>
                                 </div>
                             </div>
                         </div>
@@ -757,11 +301,11 @@
                     <p><strong>Note:</strong> This simulator provides a simplified visualization of how generative AI works. Actual AI systems are significantly more complex, involving billions of parameters and sophisticated training processes.</p>
                     <p class="copyright">© 2025 Interactive AI Learning Simulator. Created for educational purposes.</p>
                 </div>
-                
+
                 <button class="show-references-btn" onclick="toggleReferences()">
                     📚 Show References & Further Reading
                 </button>
-                
+
                 <div class="references-section" id="referencesSection">
                     <h3>References & Further Reading</h3>
                     <div class="references-grid">
@@ -802,11 +346,15 @@
         let currentStep = 0;
         const totalSteps = 5;
 
-        // Question data
+        // Track timeouts/intervals so we can clear them when restarting
+        let simTimeouts = [];
+        let simIntervals = [];
+
+        // Question data (kept concise / complete)
         const questions = {
             "What is the capital of France?": {
-                tokens: ["What", "is", "the", "capital", "of", "France", "?"],
-                response: "The capital of France is Paris. Paris is not only the capital but also the largest city in France, known for its rich history, art, culture, and iconic landmarks like the Eiffel Tower and Louvre Museum.",
+                tokens: ["What","is","the","capital","of","France","?"],
+                response: "The capital of France is Paris. Paris is known for its rich history, art, culture, and iconic landmarks like the Eiffel Tower and the Louvre.",
                 probabilities: [
                     { word: "The", prob: 85 },
                     { word: "Paris", prob: 92 },
@@ -815,8 +363,8 @@
                 ]
             },
             "How do plants make oxygen?": {
-                tokens: ["How", "do", "plants", "make", "oxygen", "?"],
-                response: "Plants make oxygen through a process called photosynthesis. During photosynthesis, plants use sunlight, carbon dioxide from the air, and water from their roots to create glucose (sugar) for energy. As a byproduct of this process, they release oxygen into the atmosphere, which is essential for most life on Earth.",
+                tokens: ["How","do","plants","make","oxygen","?"],
+                response: "Plants make oxygen through photosynthesis, converting sunlight, carbon dioxide, and water into glucose and oxygen using chlorophyll.",
                 probabilities: [
                     { word: "Plants", prob: 88 },
                     { word: "make", prob: 76 },
@@ -825,8 +373,8 @@
                 ]
             },
             "What causes rainbows to appear?": {
-                tokens: ["What", "causes", "rainbows", "to", "appear", "?"],
-                response: "Rainbows appear when sunlight and rain occur at the same time. Sunlight contains all colors of light mixed together. When this light passes through water droplets in the air, it gets separated into its component colors (red, orange, yellow, green, blue, indigo, violet) through a process called refraction and reflection, creating the beautiful arc we see as a rainbow.",
+                tokens: ["What","causes","rainbows","to","appear","?"],
+                response: "Rainbows form when sunlight refracts, reflects, and disperses in water droplets, splitting light into its component colors.",
                 probabilities: [
                     { word: "Rainbows", prob: 91 },
                     { word: "appear", prob: 73 },
@@ -836,7 +384,23 @@
             }
         };
 
-        // Event listeners
+        // Helper: clear pending simulation timers/intervals
+        function clearSimTimers() {
+            simTimeouts.forEach(id => clearTimeout(id));
+            simTimeouts = [];
+            simIntervals.forEach(id => clearInterval(id));
+            simIntervals = [];
+        }
+
+        // Reset neural visualization state
+        function resetNeuralNetwork() {
+            const nodes = document.querySelectorAll('.layer .node');
+            nodes.forEach(n => n.classList.remove('active'));
+            const arrows = document.querySelectorAll('.arrows');
+            arrows.forEach(a => a.classList.remove('active'));
+        }
+
+        // Event listeners for question buttons
         document.querySelectorAll('.question-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 currentQuestion = this.dataset.question;
@@ -845,98 +409,100 @@
         });
 
         function startSimulation() {
+            // Ensure previous timers cleared before starting
+            clearSimTimers();
+
             document.getElementById('questionSection').style.display = 'none';
             document.getElementById('processingSection').classList.add('active');
             document.getElementById('controlsSection').classList.add('active');
-            
+
             currentStep = 0;
             updateNavigationButtons();
-            
+
             const questionData = questions[currentQuestion];
-            
-            // Step 1: Tokenization
-            setTimeout(() => {
+            if (!questionData) {
+                console.warn('No question data for:', currentQuestion);
+                return;
+            }
+
+            // Step sequencing with tracked timeouts
+            simTimeouts.push(setTimeout(() => {
                 currentStep = 1;
                 updateNavigationButtons();
                 document.getElementById('step1').classList.add('active');
                 showTokens(questionData.tokens);
-            }, 500);
+            }, 500));
 
-            // Step 2: Neural Network
-            setTimeout(() => {
+            simTimeouts.push(setTimeout(() => {
                 currentStep = 2;
                 updateNavigationButtons();
                 document.getElementById('step2').classList.add('active');
                 animateNeuralNetwork();
-            }, 2000);
+            }, 2000));
 
-            // Step 3: Attention
-            setTimeout(() => {
+            simTimeouts.push(setTimeout(() => {
                 currentStep = 3;
                 updateNavigationButtons();
                 document.getElementById('step3').classList.add('active');
-            }, 4000);
+            }, 4000));
 
-            // Step 4: Generation
-            setTimeout(() => {
+            simTimeouts.push(setTimeout(() => {
                 currentStep = 4;
                 updateNavigationButtons();
                 document.getElementById('step4').classList.add('active');
                 showProbabilities(questionData.probabilities);
-            }, 5500);
+            }, 5500));
 
-            // Step 5: Response
-            setTimeout(() => {
+            simTimeouts.push(setTimeout(() => {
                 currentStep = 5;
                 updateNavigationButtons();
                 document.getElementById('step5').classList.add('active');
                 typeResponse(questionData.response);
-            }, 8000);
+            }, 8000));
         }
 
         function showTokens(tokens) {
             const container = document.getElementById('tokensContainer');
             container.innerHTML = '';
-            
             tokens.forEach((token, index) => {
-                setTimeout(() => {
+                simTimeouts.push(setTimeout(() => {
                     const tokenEl = document.createElement('div');
                     tokenEl.className = 'token';
                     tokenEl.textContent = token;
                     tokenEl.style.animationDelay = `${index * 0.1}s`;
                     container.appendChild(tokenEl);
-                }, index * 200);
+                }, index * 200));
             });
         }
 
         function animateNeuralNetwork() {
             const layers = document.querySelectorAll('.layer');
             const arrows = document.querySelectorAll('.arrows');
-            
+
             layers.forEach((layer, layerIndex) => {
-                setTimeout(() => {
+                simTimeouts.push(setTimeout(() => {
                     const nodes = layer.querySelectorAll('.node');
                     nodes.forEach((node, nodeIndex) => {
-                        setTimeout(() => {
+                        simTimeouts.push(setTimeout(() => {
                             node.classList.add('active');
-                        }, nodeIndex * 100);
+                        }, nodeIndex * 100));
                     });
-                    
+
                     if (layerIndex < arrows.length) {
-                        setTimeout(() => {
+                        simTimeouts.push(setTimeout(() => {
                             arrows[layerIndex].classList.add('active');
-                        }, 300);
+                        }, 300));
                     }
-                }, layerIndex * 600);
+                }, layerIndex * 600));
             });
         }
 
         function showProbabilities(probs) {
             const container = document.getElementById('probabilityBars');
             container.innerHTML = '<p style="margin-bottom: 15px; color: #64748b;">Probability of next words:</p>';
-            
+
             probs.forEach((prob, index) => {
-                setTimeout(() => {
+                simTimeouts.push(setTimeout(() => {
                     const probItem = document.createElement('div');
                     probItem.className = 'prob-item';
                     probItem.innerHTML = `
@@ -947,18 +513,19 @@
                         <div class="prob-percentage">${prob.prob}%</div>
                     `;
                     container.appendChild(probItem);
-                    
-                    setTimeout(() => {
-                        probItem.querySelector('.prob-fill').style.width = `${prob.prob}%`;
-                    }, 100);
-                }, index * 300);
+
+                    simTimeouts.push(setTimeout(() => {
+                        const fill = probItem.querySelector('.prob-fill');
+                        if (fill) fill.style.width = `${prob.prob}%`;
+                    }, 100));
+                }, index * 300));
             });
         }
 
         function typeResponse(response) {
             const responseEl = document.getElementById('responseText');
             responseEl.innerHTML = '<span class="typing-indicator"></span>';
-            
+
             let index = 0;
             const typeInterval = setInterval(() => {
                 if (index < response.length) {
@@ -972,33 +539,100 @@
                     responseEl.textContent = response;
                 }
             }, 50);
+
+            simIntervals.push(typeInterval);
+        }
+
+        // Defensive restartSimulation implementation
+        function restartSimulation() {
+            try {
+                // 1) Clear timers/intervals to stop in-flight animations/typing
+                clearSimTimers();
+
+                // 2) Reset step state and visuals
+                currentStep = 0;
+                for (let i = 1; i <= totalSteps; i++) {
+                    const el = document.getElementById(`step${i}`);
+                    if (el) el.classList.remove('active');
+                }
+                resetNeuralNetwork();
+
+                // 3) Clear tokens/probabilities/response
+                const tokensContainer = document.getElementById('tokensContainer');
+                if (tokensContainer) tokensContainer.innerHTML = '';
+                const probContainer = document.getElementById('probabilityBars');
+                if (probContainer) probContainer.innerHTML = '';
+                const responseEl = document.getElementById('responseText');
+                if (responseEl) responseEl.textContent = '';
+
+                // 4) Reset navigation UI and show question list
+                const qSection = document.getElementById('questionSection');
+                const pSection = document.getElementById('processingSection');
+                const cSection = document.getElementById('controlsSection');
+                if (qSection) qSection.style.display = '';
+                if (pSection) pSection.classList.remove('active');
+                if (cSection) cSection.classList.remove('active');
+
+                updateNavigationButtons();
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
+
+                // 5) Try to auto-select a different question button (wrap-around)
+                const questionBtns = Array.from(document.querySelectorAll('.question-btn'));
+                if (questionBtns.length) {
+                    const currentIndex = questionBtns.findIndex(b => b.dataset.question === currentQuestion);
+                    const nextIndex = questionBtns.length > 1 ? (currentIndex + 1) % questionBtns.length : 0;
+                    const chosen = questionBtns[nextIndex];
+                    if (chosen) {
+                        // Update selection and trigger click so existing handlers run
+                        currentQuestion = chosen.dataset.question || currentQuestion;
+                        chosen.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+                        // Safety: call startSimulation after a tiny delay if click handler didn't run it
+                        simTimeouts.push(setTimeout(() => {
+                            if (typeof startSimulation === 'function') startSimulation();
+                        }, 50));
+                        return;
+                    }
+                }
+
+                // If no automatic selection, leave question list visible for manual pick.
+                return;
+            } catch (err) {
+                console.error('restartSimulation error', err);
+                // Last-resort fallback: reload page
+                location.reload();
+            }
         }
 
         function navigateSteps(direction) {
             const newStep = currentStep + direction;
             if (newStep < 0 || newStep > totalSteps) return;
-            
+
             // Hide current step
             if (currentStep > 0) {
-                document.getElementById(`step${currentStep}`).classList.remove('active');
+                const prevEl = document.getElementById(`step${currentStep}`);
+                if (prevEl) prevEl.classList.remove('active');
             }
-            
+
             currentStep = newStep;
             updateNavigationButtons();
-            
+
             // Show new step
             if (currentStep > 0) {
                 document.getElementById(`step${currentStep}`).classList.add('active');
-                
+
                 // Re-trigger animations/content for specific steps
                 const questionData = questions[currentQuestion];
-                
+
                 if (currentStep === 1) {
                     showTokens(questionData.tokens);
                 } else if (currentStep === 2) {
                     // Reset and re-animate neural network
                     resetNeuralNetwork();
-                    setTimeout(() => animateNeuralNetwork(), 100);
+                    animateNeuralNetwork();
                 } else if (currentStep === 4) {
                     showProbabilities(questionData.probabilities);
                 } else if (currentStep === 5) {
@@ -1010,59 +644,27 @@
         function updateNavigationButtons() {
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
-            
+
+            if (!prevBtn || !nextBtn) return;
+
             prevBtn.disabled = currentStep <= 1;
             nextBtn.disabled = currentStep >= totalSteps;
-        }
 
-        function resetNeuralNetwork() {
-            document.querySelectorAll('.node').forEach(node => {
-                node.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.arrows').forEach(arrow => {
-                arrow.classList.remove('active');
-            });
-        }
-
-        function restartSimulation() {
-            document.getElementById('controlsSection').style.display = 'none';
-            document.getElementById('controlsSection').classList.remove('active');
-            document.getElementById('processingSection').style.display = 'none';
-            document.getElementById('processingSection').classList.remove('active');
-            document.getElementById('questionSection').style.display = 'block';
-            
-            // Reset all steps
-            document.querySelectorAll('.step').forEach(step => {
-                step.classList.remove('active');
-            });
-            
-            // Reset neural network
-            resetNeuralNetwork();
-            
-            // Clear containers
-            document.getElementById('tokensContainer').innerHTML = '';
-            document.getElementById('probabilityBars').innerHTML = '';
-            document.getElementById('responseText').innerHTML = '';
-            
-            // Reset step counter
-            currentStep = 0;
-        }
-
-        function toggleReferences() {
-            const referencesSection = document.getElementById('referencesSection');
-            const button = document.querySelector('.show-references-btn');
-            
-            if (referencesSection.classList.contains('active')) {
-                referencesSection.classList.remove('active');
-                button.textContent = '📚 Show References & Further Reading';
-            } else {
-                referencesSection.classList.add('active');
-                button.textContent = '📚 Hide References';
-                // Smooth scroll to references
-                referencesSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (currentStep === 0) {
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
             }
         }
+
+        // toggleReferences helper
+        function toggleReferences() {
+            const el = document.getElementById('referencesSection');
+            if (!el) return;
+            el.classList.toggle('active');
+        }
+
+        // Ensure initial nav state
+        updateNavigationButtons();
     </script>
 </body>
 </html>
