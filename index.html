@@ -543,10 +543,10 @@
             simIntervals.push(typeInterval);
         }
 
-        // Defensive restartSimulation implementation
+        // REPLACED: restartSimulation now returns to the initial question selection screen
         function restartSimulation() {
             try {
-                // 1) Clear timers/intervals to stop in-flight animations/typing
+                // 1) Clear any pending timers/intervals so animations/typing stop
                 clearSimTimers();
 
                 // 2) Reset step state and visuals
@@ -557,7 +557,7 @@
                 }
                 resetNeuralNetwork();
 
-                // 3) Clear tokens/probabilities/response
+                // 3) Clear tokens/probabilities/response content
                 const tokensContainer = document.getElementById('tokensContainer');
                 if (tokensContainer) tokensContainer.innerHTML = '';
                 const probContainer = document.getElementById('probabilityBars');
@@ -565,44 +565,30 @@
                 const responseEl = document.getElementById('responseText');
                 if (responseEl) responseEl.textContent = '';
 
-                // 4) Reset navigation UI and show question list
+                // 4) Show the question list and hide the simulation UI
                 const qSection = document.getElementById('questionSection');
                 const pSection = document.getElementById('processingSection');
                 const cSection = document.getElementById('controlsSection');
-                if (qSection) qSection.style.display = '';
-                if (pSection) pSection.classList.remove('active');
-                if (cSection) cSection.classList.remove('active');
+                if (qSection) qSection.style.display = '';             // reveal question selection
+                if (pSection) pSection.classList.remove('active');     // hide processing UI
+                if (cSection) cSection.classList.remove('active');     // hide controls section
 
+                // 5) Reset current question and navigation UI
+                currentQuestion = "";
                 updateNavigationButtons();
                 const prevBtn = document.getElementById('prevBtn');
                 const nextBtn = document.getElementById('nextBtn');
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = true;
 
-                // 5) Try to auto-select a different question button (wrap-around)
-                const questionBtns = Array.from(document.querySelectorAll('.question-btn'));
-                if (questionBtns.length) {
-                    const currentIndex = questionBtns.findIndex(b => b.dataset.question === currentQuestion);
-                    const nextIndex = questionBtns.length > 1 ? (currentIndex + 1) % questionBtns.length : 0;
-                    const chosen = questionBtns[nextIndex];
-                    if (chosen) {
-                        // Update selection and trigger click so existing handlers run
-                        currentQuestion = chosen.dataset.question || currentQuestion;
-                        chosen.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                // Accessibility: focus first question button if present
+                const firstBtn = document.querySelector('.question-btn');
+                if (firstBtn) firstBtn.focus();
 
-                        // Safety: call startSimulation after a tiny delay if click handler didn't run it
-                        simTimeouts.push(setTimeout(() => {
-                            if (typeof startSimulation === 'function') startSimulation();
-                        }, 50));
-                        return;
-                    }
-                }
-
-                // If no automatic selection, leave question list visible for manual pick.
                 return;
             } catch (err) {
                 console.error('restartSimulation error', err);
-                // Last-resort fallback: reload page
+                // fallback: reload the page
                 location.reload();
             }
         }
