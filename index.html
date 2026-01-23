@@ -1,656 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>How Generative AI Works - Interactive Simulator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Check-In</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel for single-file execution -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-            overflow-x: hidden;
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
         }
-
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
-        .header { text-align: center; margin-bottom: 40px; color: white; }
-
-        .header h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 700;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .header p { font-size: clamp(1rem, 2.5vw, 1.2rem); opacity: 0.9; max-width: 600px; margin: 0 auto; }
-
-        .simulator {
-            background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            overflow: hidden; margin-bottom: 40px;
-        }
-
-        .question-section {
-            padding: 40px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .question-section h2 { color: #1e293b; margin-bottom: 20px; font-size: 1.5rem; }
-
-        .question-buttons {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px; margin-bottom: 20px;
-        }
-
-        .question-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer;
-            font-size: 1rem; font-weight: 500; transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-            text-align: left;
-        }
-
-        .question-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59,130,246,0.4); }
-        .question-btn:active { transform: translateY(0); }
-
-        .processing-section { padding: 40px; display: none; }
-        .processing-section.active { display: block; }
-
-        .step { margin-bottom: 30px; opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
-        .step.active { opacity: 1; transform: translateY(0); }
-
-        .step-header { display:flex; align-items:center; margin-bottom:15px; }
-        .step-number {
-            width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white; border-radius: 50%; display:flex; align-items:center; justify-content:center;
-            font-weight:bold; margin-right: 15px; box-shadow: 0 4px 15px rgba(16,185,129,0.3);
-        }
-        .step-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
-
-        .step-content { background: #f8fafc; border-radius: 12px; padding: 20px; border-left: 4px solid #10b981; }
-
-        .neural-network { display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:wrap; gap:15px; }
-        .layer { display:flex; flex-direction:column; align-items:center; flex:1; min-width:80px; }
-        .layer-title { font-size: 0.8rem; color:#64748b; margin-bottom:10px; text-align:center; }
-        .nodes { display:flex; flex-direction:column; gap:8px; }
-        .node { width:20px; height:20px; background:#cbd5e1; border-radius:50%; transition: all .3s ease; }
-        .node.active { background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); box-shadow: 0 0 15px rgba(245,158,11,0.5); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-
-        .arrows { display:flex; flex-direction:column; gap:8px; opacity:0.3; transition: opacity .3s ease; }
-        .arrows.active { opacity: 1; }
-        .arrow { width:30px; height:2px; background:#3b82f6; position:relative; }
-        .arrow::after { content:''; position:absolute; right:-5px; top:-3px; width:0; height:0; border-left:8px solid #3b82f6; border-top:4px solid transparent; border-bottom:4px solid transparent; }
-
-        .tokens-container { display:flex; flex-wrap:wrap; gap:8px; margin:15px 0; }
-        .token {
-            background: linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%); color:white; padding:6px 12px; border-radius:20px;
-            font-size:0.9rem; font-weight:500; opacity:0; transform:scale(0); animation: tokenAppear 0.5s ease forwards;
-        }
-        @keyframes tokenAppear { to { opacity:1; transform:scale(1); } }
-
-        .probability-bars { margin:20px 0; }
-        .prob-item { display:flex; align-items:center; margin-bottom:10px; }
-        .prob-word { width:80px; font-size:0.9rem; font-weight:500; }
-        .prob-bar { flex:1; height:20px; background:#e2e8f0; border-radius:10px; overflow:hidden; margin:0 10px; }
-        .prob-fill { height:100%; background: linear-gradient(135deg,#06b6d4 0%,#0891b2 100%); border-radius:10px; width:0; transition: width 1s ease; }
-        .prob-percentage { font-size:0.8rem; color:#64748b; min-width:40px; }
-
-        .response-box { background:white; border-radius:12px; padding:25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left:4px solid #10b981; margin-top:20px; }
-        .response-text { font-size:1.1rem; line-height:1.6; color:#1e293b; margin:0; min-height:1.2rem; }
-
-        .typing-indicator { display:inline-block; width:4px; height:1.2rem; background:#10b981; animation: blink 1s infinite; margin-left:2px; }
-        @keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
-
-        .controls-section {
-            padding:40px; background: linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%); border-top:1px solid #e2e8f0;
-            display:none; text-align:center;
-        }
-        .controls-section.active { display:block; }
-        .navigation-controls { margin-bottom:20px; }
-
-        .nav-btn {
-            background: linear-gradient(135deg,#64748b 0%,#475569 100%); color:white; border:none; padding:12px 24px; border-radius:10px;
-            cursor:pointer; font-size:1rem; font-weight:500; margin:0 10px; transition: all .3s ease; box-shadow: 0 4px 15px rgba(100,116,139,0.3);
-        }
-        .nav-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(100,116,139,0.4); }
-        .nav-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; box-shadow:none; transform:none; }
-
-        .restart-btn {
-            background: linear-gradient(135deg,#6366f1 0%,#4f46e5 100%); color:white; border:none; padding:15px 30px; border-radius:10px;
-            cursor:pointer; font-size:1rem; font-weight:500; margin-top:20px; transition: all .3s ease; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
-        }
-        .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
-
-        .info-section { background:white; border-radius:20px; padding:40px; box-shadow:0 20px 60px rgba(0,0,0,0.1); }
-        .info-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap:30px; }
-        .info-card { background: linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%); border-radius:15px; padding:25px; transition: transform .3s ease; }
-        .info-card:hover { transform: translateY(-5px); }
-        .info-card h3 { color:#1e293b; margin-bottom:15px; font-size:1.3rem; }
-        .info-card p { color:#64748b; line-height:1.6; }
-
-        .footer { background: linear-gradient(135deg,#1e293b 0%,#334155 100%); color:white; margin-top:40px; border-radius:20px; overflow:hidden; text-align:center; }
-        .footer-content { padding:40px; }
-        .show-references-btn {
-            background: linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%); color:white; border:none; padding:15px 30px; border-radius:12px; cursor:pointer;
-            font-size:1rem; font-weight:500; transition: all .3s ease; box-shadow: 0 4px 15px rgba(59,130,246,0.3); margin-top:30px;
-        }
-        .references-section { display:none; animation: fadeIn .5s ease-in-out; }
-        .references-section.active { display:block; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-
-        @media (max-width: 768px) {
-            .container { padding:15px; }
-            .question-section, .processing-section, .controls-section { padding:25px; }
-            .neural-network { justify-content:center; }
-            .layer { margin: 0 10px; }
-            .arrows { display:none; }
-            .info-grid { grid-template-columns:1fr; }
-            .references-grid { grid-template-columns:1fr; }
-            .footer-content { padding:25px; }
+        .animate-pulse-slow {
+            animation: pulse-slow 4s infinite ease-in-out;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>How Generative AI Works</h1>
-            <p>Discover the magic behind AI responses through this interactive simulator</p>
-        </div>
+    <div id="root"></div>
 
-        <div class="simulator">
-            <div class="question-section" id="questionSection">
-                <h2>Choose a Question to Ask the AI</h2>
-                <div class="question-buttons">
-                    <button class="question-btn" data-question="What is the capital of France?">
-                        🌍 What is the capital of France?
-                    </button>
-                    <button class="question-btn" data-question="How do plants make oxygen?">
-                        🌱 How do plants make oxygen?
-                    </button>
-                    <button class="question-btn" data-question="What causes rainbows to appear?">
-                        🌈 What causes rainbows to appear?
-                    </button>
-                </div>
-            </div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-            <div class="processing-section" id="processingSection">
-                <div class="step" id="step1">
-                    <div class="step-header">
-                        <div class="step-number">1</div>
-                        <div class="step-title">Input Processing & Tokenization</div>
-                    </div>
-                    <div class="step-content">
-                        <p>The AI breaks down your question into smaller pieces called "tokens" - think of them as the building blocks of language.</p>
-                        <div class="tokens-container" id="tokensContainer"></div>
-                    </div>
-                </div>
-
-                <div class="step" id="step2">
-                    <div class="step-header">
-                        <div class="step-number">2</div>
-                        <div class="step-title">Neural Network Processing</div>
-                    </div>
-                    <div class="step-content">
-                        <p>The tokens flow through layers of artificial neurons, each layer understanding the text at a deeper level.</p>
-                        <div class="neural-network">
-                            <div class="layer">
-                                <div class="layer-title">Input Layer</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                            <div class="arrows">
-                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
-                            </div>
-                            <div class="layer">
-                                <div class="layer-title">Hidden Layer 1</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                            <div class="arrows">
-                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
-                            </div>
-                            <div class="layer">
-                                <div class="layer-title">Hidden Layer 2</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                            <div class="arrows">
-                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
-                            </div>
-                            <div class="layer">
-                                <div class="layer-title">Output Layer</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="step" id="step3">
-                    <div class="step-header">
-                        <div class="step-number">3</div>
-                        <div class="step-title">Attention & Context Understanding</div>
-                    </div>
-                    <div class="step-content">
-                        <p>The AI focuses on the most important parts of your question and understands the context and relationships between words.</p>
-                    </div>
-                </div>
-
-                <div class="step" id="step4">
-                    <div class="step-header">
-                        <div class="step-number">4</div>
-                        <div class="step-title">Response Generation</div>
-                    </div>
-                    <div class="step-content">
-                        <p>The AI predicts the most likely next words based on patterns learned from training data, building a response word by word.</p>
-                        <div class="probability-bars" id="probabilityBars"></div>
-                    </div>
-                </div>
-
-                <div class="step" id="step5">
-                    <div class="step-header">
-                        <div class="step-number">5</div>
-                        <div class="step-title">Final AI Response</div>
-                    </div>
-                    <div class="step-content">
-                        <p>The AI assembles its final response based on the most probable sequence of words and phrases.</p>
-                        <div class="response-box">
-                            <div class="response-text" id="responseText"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="controls-section" id="controlsSection">
-                <div class="navigation-controls">
-                    <button class="nav-btn" id="prevBtn" onclick="navigateSteps(-1)" disabled>← Previous Step</button>
-                    <button class="nav-btn" id="nextBtn" onclick="navigateSteps(1)" disabled>Next Step →</button>
-                </div>
-                <button class="restart-btn" onclick="restartSimulation()">Try Another Question</button>
-            </div>
-        </div>
-
-        <div class="info-section">
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>🧠 Machine Learning</h3>
-                    <p>AI systems learn patterns from vast amounts of text data, similar to how humans learn language through exposure and practice.</p>
-                </div>
-                <div class="info-card">
-                    <h3>🔗 Deep Learning</h3>
-                    <p>Multiple layers of artificial neurons work together to understand complex patterns and relationships in language.</p>
-                </div>
-                <div class="info-card">
-                    <h3>⚡ Neural Networks</h3>
-                    <p>Inspired by the human brain, these networks process information through interconnected nodes that strengthen important connections.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <div class="footer-content">
-                <div class="footer-note">
-                    <p><strong>Note:</strong> This simulator provides a simplified visualization of how generative AI works. Actual AI systems are significantly more complex, involving billions of parameters and sophisticated training processes.</p>
-                    <p class="copyright">© 2025 Interactive AI Learning Simulator. Created for educational purposes.</p>
-                </div>
-
-                <button class="show-references-btn" onclick="toggleReferences()">
-                    📚 Show References & Further Reading
-                </button>
-
-                <div class="references-section" id="referencesSection">
-                    <h3>References & Further Reading</h3>
-                    <div class="references-grid">
-                        <div class="reference-category">
-                            <h4>🧠 Neural Networks & Deep Learning</h4>
-                            <ul>
-                                <li>Goodfellow, I., Bengio, Y., & Courville, A. (2016). <em>Deep Learning</em>. MIT Press.</li>
-                                <li>Nielsen, M. (2015). <em>Neural Networks and Deep Learning</em>. Determination Press.</li>
-                                <li>LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. <em>Nature</em>, 521(7553), 436-444.</li>
-                            </ul>
-                        </div>
-                        <div class="reference-category">
-                            <h4>🤖 Generative AI & Language Models</h4>
-                            <ul>
-                                <li>Vaswani, A., et al. (2017). Attention is all you need. <em>Advances in Neural Information Processing Systems</em>.</li>
-                                <li>Brown, T., et al. (2020). Language models are few-shot learners. <em>Advances in Neural Information Processing Systems</em>.</li>
-                                <li>OpenAI (2023). GPT-4 Technical Report. arXiv preprint arXiv:2303.08774.</li>
-                            </ul>
-                        </div>
-                        <div class="reference-category">
-                            <h4>📚 Educational Resources</h4>
-                            <ul>
-                                <li>Stanford CS229: <a href="https://cs229.stanford.edu/" target="_blank">Machine Learning Course</a></li>
-                                <li>MIT 6.034: <a href="https://ocw.mit.edu/courses/6-034-artificial-intelligence-fall-2010/" target="_blank">Artificial Intelligence</a></li>
-                                <li>Coursera: <a href="https://www.coursera.org/learn/machine-learning" target="_blank">Machine Learning by Andrew Ng</a></li>
-                                <li>3Blue1Brown: <a href="https://www.3blue1brown.com/topics/neural-networks" target="_blank">Neural Networks Explained</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Global variables
-        let currentQuestion = "";
-        let currentStep = 0;
-        const totalSteps = 5;
-
-        // Track timeouts/intervals so we can clear them when restarting
-        let simTimeouts = [];
-        let simIntervals = [];
-
-        // Question data (kept concise / complete)
-        const questions = {
-            "What is the capital of France?": {
-                tokens: ["What","is","the","capital","of","France","?"],
-                response: "The capital of France is Paris. Paris is known for its rich history, art, culture, and iconic landmarks like the Eiffel Tower and the Louvre.",
-                probabilities: [
-                    { word: "The", prob: 85 },
-                    { word: "Paris", prob: 92 },
-                    { word: "is", prob: 78 },
-                    { word: "located", prob: 45 }
+        const QUESTION_CATEGORIES = {
+            ICEBREAKERS: {
+                icon: "coffee",
+                label: "Icebreakers",
+                questions: [
+                    "If you were a vegetable, what would you be and why?",
+                    "What is your go-to karaoke song?",
+                    "What's the most 'random' thing in your workspace right now?",
+                    "If you could have any superpower for just one hour, what would it be?",
+                    "What's the best cereal of all time?",
+                    "If you were a professional wrestler, what would your entrance theme be?",
+                    "What's the most useless talent you have?",
+                    "If you had to change your name, what would you change it to?",
+                    "Which fictional character would you want as your roommate?",
+                    "What's your most controversial food opinion?",
+                    "What’s the weirdest food combination you actually enjoy?",
+                    "If you could be any animal for a day, which one are you picking?",
+                    "What’s the most embarrassing fashion trend you ever followed?",
+                    "If you were famous, what would you be famous for?",
+                    "What is your absolute favorite smell?",
+                    "If you could only use one emoji for the rest of your life, which one is it?",
+                    "What’s the best topping for a pizza (wrong answers only)?",
+                    "What is the most 'dad' thing you do?",
+                    "If you were a ghost, where would you haunt?",
+                    "What is your favorite board game of all time?",
+                    "If you could win an Olympic medal for any mundane task, what would it be?",
+                    "What’s the first thing you’d buy if you won $1,000 today?",
+                    "Which celebrity would you want to narrate your life?",
+                    "What is the most ridiculous outfit you’ve ever worn?",
+                    "If you had to live in a video game, which one would it be?",
+                    "What is your secret 'guilty pleasure' movie?",
+                    "If you could talk to one species of animal, which would it be?",
+                    "What’s the best dessert you’ve ever had?",
+                    "What is a nickname you had as a kid?",
+                    "If you could be any age forever, what age would it be?"
                 ]
             },
-            "How do plants make oxygen?": {
-                tokens: ["How","do","plants","make","oxygen","?"],
-                response: "Plants make oxygen through photosynthesis, converting sunlight, carbon dioxide, and water into glucose and oxygen using chlorophyll.",
-                probabilities: [
-                    { word: "Plants", prob: 88 },
-                    { word: "make", prob: 76 },
-                    { word: "oxygen", prob: 94 },
-                    { word: "through", prob: 82 }
+            REFLECTIVE: {
+                icon: "heart",
+                label: "Reflective",
+                questions: [
+                    "What is a 'small win' you had today?",
+                    "What is the highlight of your week so far?",
+                    "What's one thing you're grateful for right now?",
+                    "What’s the best piece of advice you’ve ever received?",
+                    "What is a habit you're trying to build lately?",
+                    "If you could give your younger self one piece of advice, what would it be?",
+                    "What made you smile in the last 24 hours?",
+                    "What is something you're looking forward to this weekend?",
+                    "Who is someone you've been thinking about recently?",
+                    "What's a lesson you learned the hard way recently?",
+                    "What’s a book or movie that changed the way you think?",
+                    "What is something you’ve done recently that you’re proud of?",
+                    "When was the last time you felt truly inspired?",
+                    "What’s a tradition you’ve kept since childhood?",
+                    "What does your perfect 'recharge' day look like?",
+                    "What is a personality trait you really value in others?",
+                    "What’s a fear you’ve overcome recently?",
+                    "What’s something you’ve learned about yourself this year?",
+                    "What is the most beautiful place you have ever been?",
+                    "How do you usually handle a stressful day?",
+                    "What’s a compliment you received that stuck with you?",
+                    "What is your favorite memory from the last year?",
+                    "What’s something you’re currently working on improving?",
+                    "What does 'success' mean to you personally?",
+                    "What’s a hobby that makes you lose track of time?",
+                    "Who has been the biggest influence on your life?",
+                    "What is one thing you want to be remembered for?",
+                    "What’s a 'life hack' that actually works for you?",
+                    "What is the most important lesson you’ve learned this month?",
+                    "If you could change one thing about the world, what would it be?"
                 ]
             },
-            "What causes rainbows to appear?": {
-                tokens: ["What","causes","rainbows","to","appear","?"],
-                response: "Rainbows form when sunlight refracts, reflects, and disperses in water droplets, splitting light into its component colors.",
-                probabilities: [
-                    { word: "Rainbows", prob: 91 },
-                    { word: "appear", prob: 73 },
-                    { word: "when", prob: 86 },
-                    { word: "sunlight", prob: 89 }
+            IMAGINATIVE: {
+                icon: "lightbulb",
+                label: "Imaginative",
+                questions: [
+                    "If you could live in any era for one week, which would it be?",
+                    "If you could start a cult, what would its central theme be?",
+                    "If animals could talk, which one would be the rudest?",
+                    "What would the title of your autobiography be?",
+                    "If you could swap lives with anyone for a day, who would it be?",
+                    "If you discovered a new planet, what would you name it?",
+                    "What would your dream house look like if money was no object?",
+                    "If you could teleport to one place right now, where would it be?",
+                    "What's a business idea you've had but never acted on?",
+                    "If you could only eat one cuisine for the rest of your life, what is it?",
+                    "If you could build a robot to do one task, what would it be?",
+                    "If you were a flavor of ice cream, what would you be?",
+                    "If you could bring any historical figure to 2024, who would it be?",
+                    "What would you do if you found a genie in a lamp today?",
+                    "If you could design a new holiday, what would it celebrate?",
+                    "If you could have a dinner party with three fictional characters, who are they?",
+                    "If you could see 10 years into your own future, would you?",
+                    "What would be the first thing you’d do if you were invisible?",
+                    "If you could create a new color, what would you call it?",
+                    "If you could master any musical instrument instantly, which one?",
+                    "If you were the ruler of a small island, what would be your first law?",
+                    "What would you do if you woke up with $1 million but couldn't spend it on yourself?",
+                    "If you could turn any activity into an Olympic sport, what would you win at?",
+                    "What would the world be like if we didn't have to sleep?",
+                    "If you could live in any movie universe, which one would it be?",
+                    "If you could pause time for one hour every day, how would you use it?",
+                    "What would you name your own private theme park?",
+                    "If you were a superhero, what would your secret hideout look like?",
+                    "If you could have the answer to any one mystery, what would it be?",
+                    "If you were a mythical creature, which one would you be?"
+                ]
+            },
+            WORK_VIBES: {
+                icon: "zap",
+                label: "Work Vibes",
+                questions: [
+                    "What is your 'deep work' playlist right now?",
+                    "What's your favorite way to spend your lunch break?",
+                    "If you could skip one part of your daily routine, what would it be?",
+                    "What's your favorite Slack emoji or reaction?",
+                    "Which coworker would most likely survive a zombie apocalypse?",
+                    "What’s your favorite thing about your current setup?",
+                    "What's the first thing you do when you log off for the day?",
+                    "What is a skill you'd love to learn if you had the time?",
+                    "How do you take your coffee or tea?",
+                    "What's your favorite productivity 'hack'?",
+                    "What’s your favorite background noise for focusing?",
+                    "If you could move your office to anywhere in the world, where would it be?",
+                    "What’s the best team-building activity you’ve ever done?",
+                    "What is your 'uniform' when working from home?",
+                    "What is one thing you’re a total 'expert' on at work?",
+                    "What’s your favorite way to celebrate a project finishing?",
+                    "If our team was a sitcom, what would it be called?",
+                    "What is the most useful tool in your digital toolbox?",
+                    "What’s a 'hidden gem' software or app you use?",
+                    "What is the most interesting thing you’ve learned at work lately?",
+                    "How do you stay motivated on a Tuesday afternoon?",
+                    "What’s your favorite way to start your Monday morning?",
+                    "If you could give everyone on the team a gift, what would it be?",
+                    "What’s your favorite way to brainstorm new ideas?",
+                    "What is your 'go-to' snack during a long meeting?",
+                    "What's the best work-related book you've read?",
+                    "If you could swap jobs with any coworker for a day, who would it be?",
+                    "What is the funniest thing that’s happened on a video call?",
+                    "What’s one thing you appreciate about your team right now?",
+                    "What is your ideal 'end of work' ritual?"
                 ]
             }
         };
 
-        // Helper: clear pending simulation timers/intervals
-        function clearSimTimers() {
-            simTimeouts.forEach(id => clearTimeout(id));
-            simTimeouts = [];
-            simIntervals.forEach(id => clearInterval(id));
-            simIntervals = [];
-        }
+        const Icon = ({ name, className }) => {
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
 
-        // Reset neural visualization state
-        function resetNeuralNetwork() {
-            const nodes = document.querySelectorAll('.layer .node');
-            nodes.forEach(n => n.classList.remove('active'));
-            const arrows = document.querySelectorAll('.arrows');
-            arrows.forEach(a => a.classList.remove('active'));
-        }
+        const App = () => {
+            const [activeCategory, setActiveCategory] = useState('ICEBREAKERS');
+            const [currentQuestion, setCurrentQuestion] = useState("");
+            const [isAnimating, setIsAnimating] = useState(false);
+            const [copyStatus, setCopyStatus] = useState("Share Question");
 
-        // Event listeners for question buttons
-        document.querySelectorAll('.question-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                currentQuestion = this.dataset.question;
-                startSimulation();
-            });
-        });
+            const getRandomQuestion = (category) => {
+                const list = QUESTION_CATEGORIES[category].questions;
+                let newQuestion = list[Math.floor(Math.random() * list.length)];
+                // Avoiding immediate repeats
+                if (newQuestion === currentQuestion && list.length > 1) {
+                    return getRandomQuestion(category);
+                }
+                return newQuestion;
+            };
 
-        function startSimulation() {
-            // Ensure previous timers cleared before starting
-            clearSimTimers();
+            const handleNewQuestion = () => {
+                setIsAnimating(true);
+                setTimeout(() => {
+                    setCurrentQuestion(getRandomQuestion(activeCategory));
+                    setIsAnimating(false);
+                }, 300);
+            };
 
-            document.getElementById('questionSection').style.display = 'none';
-            document.getElementById('processingSection').classList.add('active');
-            document.getElementById('controlsSection').classList.add('active');
+            const handleShare = () => {
+                const textToCopy = `Vibe Check! 🎲\n\nQuestion: "${currentQuestion}"\n\n(Shared from VibeCheck App)`;
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setCopyStatus("Copied! ✨");
+                    setTimeout(() => setCopyStatus("Share Question"), 2000);
+                } catch (err) {
+                    setCopyStatus("Failed to copy");
+                }
+                document.body.removeChild(textArea);
+            };
 
-            currentStep = 0;
-            updateNavigationButtons();
+            useEffect(() => {
+                setCurrentQuestion(getRandomQuestion('ICEBREAKERS'));
+                if (window.lucide) window.lucide.createIcons();
+            }, []);
 
-            const questionData = questions[currentQuestion];
-            if (!questionData) {
-                console.warn('No question data for:', currentQuestion);
-                return;
-            }
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-8 font-sans overflow-hidden">
+                    {/* Background decoration */}
+                    <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200 rounded-full blur-3xl opacity-50 animate-pulse-slow"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-rose-200 rounded-full blur-3xl opacity-50 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+                    </div>
 
-            // Step sequencing with tracked timeouts
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 1;
-                updateNavigationButtons();
-                document.getElementById('step1').classList.add('active');
-                showTokens(questionData.tokens);
-            }, 500));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 2;
-                updateNavigationButtons();
-                document.getElementById('step2').classList.add('active');
-                animateNeuralNetwork();
-            }, 2000));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 3;
-                updateNavigationButtons();
-                document.getElementById('step3').classList.add('active');
-            }, 4000));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 4;
-                updateNavigationButtons();
-                document.getElementById('step4').classList.add('active');
-                showProbabilities(questionData.probabilities);
-            }, 5500));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 5;
-                updateNavigationButtons();
-                document.getElementById('step5').classList.add('active');
-                typeResponse(questionData.response);
-            }, 8000));
-        }
-
-        function showTokens(tokens) {
-            const container = document.getElementById('tokensContainer');
-            container.innerHTML = '';
-            tokens.forEach((token, index) => {
-                simTimeouts.push(setTimeout(() => {
-                    const tokenEl = document.createElement('div');
-                    tokenEl.className = 'token';
-                    tokenEl.textContent = token;
-                    tokenEl.style.animationDelay = `${index * 0.1}s`;
-                    container.appendChild(tokenEl);
-                }, index * 200));
-            });
-        }
-
-        function animateNeuralNetwork() {
-            const layers = document.querySelectorAll('.layer');
-            const arrows = document.querySelectorAll('.arrows');
-
-            layers.forEach((layer, layerIndex) => {
-                simTimeouts.push(setTimeout(() => {
-                    const nodes = layer.querySelectorAll('.node');
-                    nodes.forEach((node, nodeIndex) => {
-                        simTimeouts.push(setTimeout(() => {
-                            node.classList.add('active');
-                        }, nodeIndex * 100));
-                    });
-
-                    if (layerIndex < arrows.length) {
-                        simTimeouts.push(setTimeout(() => {
-                            arrows[layerIndex].classList.add('active');
-                        }, 300));
-                    }
-                }, layerIndex * 600));
-            });
-        }
-
-        function showProbabilities(probs) {
-            const container = document.getElementById('probabilityBars');
-            container.innerHTML = '<p style="margin-bottom: 15px; color: #64748b;">Probability of next words:</p>';
-
-            probs.forEach((prob, index) => {
-                simTimeouts.push(setTimeout(() => {
-                    const probItem = document.createElement('div');
-                    probItem.className = 'prob-item';
-                    probItem.innerHTML = `
-                        <div class="prob-word">${prob.word}</div>
-                        <div class="prob-bar">
-                            <div class="prob-fill"></div>
+                    <header className="text-center mb-8 relative z-10">
+                        <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm mb-4 border border-slate-100">
+                            <Icon name="sparkles" className="w-4 h-4 text-indigo-500" />
+                            <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px] sm:text-xs">Daily Vibe Check</span>
                         </div>
-                        <div class="prob-percentage">${prob.prob}%</div>
-                    `;
-                    container.appendChild(probItem);
+                        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">How's the team?</h1>
+                        <p className="text-slate-500 mt-2 max-w-xs mx-auto text-sm sm:text-base">Pick a category and share a thought to get the conversation started.</p>
+                    </header>
 
-                    simTimeouts.push(setTimeout(() => {
-                        const fill = probItem.querySelector('.prob-fill');
-                        if (fill) fill.style.width = `${prob.prob}%`;
-                    }, 100));
-                }, index * 300));
-            });
-        }
+                    <div className="flex flex-wrap justify-center gap-2 mb-8 w-full max-w-2xl relative z-10">
+                        {Object.entries(QUESTION_CATEGORIES).map(([key, data]) => (
+                            <button
+                                key={key}
+                                onClick={() => {
+                                    setActiveCategory(key);
+                                    // Set a question from the new category immediately
+                                    setCurrentQuestion(getRandomQuestion(key));
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                                    activeCategory === key 
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105' 
+                                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                                }`}
+                            >
+                                <Icon name={data.icon} className="w-4 h-4" />
+                                {data.label}
+                            </button>
+                        ))}
+                    </div>
 
-        function typeResponse(response) {
-            const responseEl = document.getElementById('responseText');
-            responseEl.innerHTML = '<span class="typing-indicator"></span>';
+                    <div className="w-full max-w-md relative z-10 group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-rose-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                        
+                        <div className="relative bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col min-h-[320px]">
+                            <div className="p-8 flex-grow flex items-center justify-center text-center">
+                                <h2 className={`text-2xl sm:text-3xl font-bold text-slate-800 leading-tight transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                                    {currentQuestion}
+                                </h2>
+                            </div>
 
-            let index = 0;
-            const typeInterval = setInterval(() => {
-                if (index < response.length) {
-                    responseEl.textContent = response.slice(0, index + 1);
-                    const cursor = document.createElement('span');
-                    cursor.className = 'typing-indicator';
-                    responseEl.appendChild(cursor);
-                    index++;
-                } else {
-                    clearInterval(typeInterval);
-                    responseEl.textContent = response;
-                }
-            }, 50);
+                            <div className="p-6 bg-slate-50 flex flex-col gap-3">
+                                <button
+                                    onClick={handleNewQuestion}
+                                    disabled={isAnimating}
+                                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black active:scale-[0.98] transition-all disabled:opacity-50"
+                                >
+                                    <Icon name="shuffle" className={`w-5 h-5 ${isAnimating ? 'animate-spin' : ''}`} />
+                                    Next Question
+                                </button>
+                                
+                                <button
+                                    onClick={handleShare}
+                                    className="w-full py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-2 hover:border-slate-300 hover:bg-slate-100 active:scale-[0.98] transition-all"
+                                >
+                                    <Icon name="share-2" className="w-4 h-4" />
+                                    {copyStatus}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-            simIntervals.push(typeInterval);
-        }
+                    <footer className="mt-12 text-slate-400 text-sm flex items-center gap-2 relative z-10">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        {QUESTION_CATEGORIES[activeCategory].questions.length} Questions in this Category
+                    </footer>
+                </div>
+            );
+        };
 
-        // REPLACED: restartSimulation now returns to the initial question selection screen
-        function restartSimulation() {
-            try {
-                // 1) Clear any pending timers/intervals so animations/typing stop
-                clearSimTimers();
-
-                // 2) Reset step state and visuals
-                currentStep = 0;
-                for (let i = 1; i <= totalSteps; i++) {
-                    const el = document.getElementById(`step${i}`);
-                    if (el) el.classList.remove('active');
-                }
-                resetNeuralNetwork();
-
-                // 3) Clear tokens/probabilities/response content
-                const tokensContainer = document.getElementById('tokensContainer');
-                if (tokensContainer) tokensContainer.innerHTML = '';
-                const probContainer = document.getElementById('probabilityBars');
-                if (probContainer) probContainer.innerHTML = '';
-                const responseEl = document.getElementById('responseText');
-                if (responseEl) responseEl.textContent = '';
-
-                // 4) Show the question list and hide the simulation UI
-                const qSection = document.getElementById('questionSection');
-                const pSection = document.getElementById('processingSection');
-                const cSection = document.getElementById('controlsSection');
-                if (qSection) qSection.style.display = '';             // reveal question selection
-                if (pSection) pSection.classList.remove('active');     // hide processing UI
-                if (cSection) cSection.classList.remove('active');     // hide controls section
-
-                // 5) Reset current question and navigation UI
-                currentQuestion = "";
-                updateNavigationButtons();
-                const prevBtn = document.getElementById('prevBtn');
-                const nextBtn = document.getElementById('nextBtn');
-                if (prevBtn) prevBtn.disabled = true;
-                if (nextBtn) nextBtn.disabled = true;
-
-                // Accessibility: focus first question button if present
-                const firstBtn = document.querySelector('.question-btn');
-                if (firstBtn) firstBtn.focus();
-
-                return;
-            } catch (err) {
-                console.error('restartSimulation error', err);
-                // fallback: reload the page
-                location.reload();
-            }
-        }
-
-        function navigateSteps(direction) {
-            const newStep = currentStep + direction;
-            if (newStep < 0 || newStep > totalSteps) return;
-
-            // Hide current step
-            if (currentStep > 0) {
-                const prevEl = document.getElementById(`step${currentStep}`);
-                if (prevEl) prevEl.classList.remove('active');
-            }
-
-            currentStep = newStep;
-            updateNavigationButtons();
-
-            // Show new step
-            if (currentStep > 0) {
-                document.getElementById(`step${currentStep}`).classList.add('active');
-
-                // Re-trigger animations/content for specific steps
-                const questionData = questions[currentQuestion];
-
-                if (currentStep === 1) {
-                    showTokens(questionData.tokens);
-                } else if (currentStep === 2) {
-                    // Reset and re-animate neural network
-                    resetNeuralNetwork();
-                    animateNeuralNetwork();
-                } else if (currentStep === 4) {
-                    showProbabilities(questionData.probabilities);
-                } else if (currentStep === 5) {
-                    typeResponse(questionData.response);
-                }
-            }
-        }
-
-        function updateNavigationButtons() {
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-
-            if (!prevBtn || !nextBtn) return;
-
-            prevBtn.disabled = currentStep <= 1;
-            nextBtn.disabled = currentStep >= totalSteps;
-
-            if (currentStep === 0) {
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-            }
-        }
-
-        // toggleReferences helper
-        function toggleReferences() {
-            const el = document.getElementById('referencesSection');
-            if (!el) return;
-            el.classList.toggle('active');
-        }
-
-        // Ensure initial nav state
-        updateNavigationButtons();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
