@@ -1,670 +1,760 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>How Generative AI Works - Interactive Simulator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How GenAI "Thinks" - Interactive Simulation</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
             color: #333;
-            overflow-x: hidden;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-        .header { text-align: center; margin-bottom: 40px; color: white; }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
 
-        .header h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 700;
+        h1 {
+            font-size: 2.5em;
             margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .header p { font-size: clamp(1rem, 2.5vw, 1.2rem); opacity: 0.9; max-width: 600px; margin: 0 auto; }
-
-        .simulator {
-            background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-            overflow: hidden; margin-bottom: 40px;
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
         }
 
-        .question-section {
-            padding: 40px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-bottom: 1px solid #e2e8f0;
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
         }
 
-        .question-section h2 { color: #1e293b; margin-bottom: 20px; font-size: 1.5rem; }
+        .question-selector {
+            margin-bottom: 30px;
+        }
+
+        .question-selector h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
 
         .question-buttons {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px; margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
         }
 
         .question-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: white; border: none; padding: 20px; border-radius: 12px; cursor: pointer;
-            font-size: 1rem; font-weight: 500; transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s, box-shadow 0.2s;
             text-align: left;
         }
 
-        .question-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(59,130,246,0.4); }
-        .question-btn:active { transform: translateY(0); }
+        .question-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
 
-        .processing-section { padding: 40px; display: none; }
-        .processing-section.active { display: block; }
+        .question-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
 
-        .step { margin-bottom: 30px; opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
-        .step.active { opacity: 1; transform: translateY(0); }
+        .simulation-area {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
 
-        .step-header { display:flex; align-items:center; margin-bottom:15px; }
+        .simulation-area.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .step-container {
+            display: none;
+        }
+
+        .step-container.active {
+            display: block;
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         .step-number {
-            width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white; border-radius: 50%; display:flex; align-items:center; justify-content:center;
-            font-weight:bold; margin-right: 15px; box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-right: 15px;
         }
-        .step-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
 
-        .step-content { background: #f8fafc; border-radius: 12px; padding: 20px; border-left: 4px solid #10b981; }
+        .step-title {
+            font-size: 1.8em;
+            color: #667eea;
+        }
 
-        .neural-network { display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:wrap; gap:15px; }
-        .layer { display:flex; flex-direction:column; align-items:center; flex:1; min-width:80px; }
-        .layer-title { font-size: 0.8rem; color:#64748b; margin-bottom:10px; text-align:center; }
-        .nodes { display:flex; flex-direction:column; gap:8px; }
-        .node { width:20px; height:20px; background:#cbd5e1; border-radius:50%; transition: all .3s ease; }
-        .node.active { background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); box-shadow: 0 0 15px rgba(245,158,11,0.5); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .step-content {
+            margin-bottom: 20px;
+        }
 
-        .arrows { display:flex; flex-direction:column; gap:8px; opacity:0.3; transition: opacity .3s ease; }
-        .arrows.active { opacity: 1; }
-        .arrow { width:30px; height:2px; background:#3b82f6; position:relative; }
-        .arrow::after { content:''; position:absolute; right:-5px; top:-3px; width:0; height:0; border-left:8px solid #3b82f6; border-top:4px solid transparent; border-bottom:4px solid transparent; }
+        .visualization {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
 
-        .tokens-container { display:flex; flex-wrap:wrap; gap:8px; margin:15px 0; }
+        .tokens {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
         .token {
-            background: linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%); color:white; padding:6px 12px; border-radius:20px;
-            font-size:0.9rem; font-weight:500; opacity:0; transform:scale(0); animation: tokenAppear 0.5s ease forwards;
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9em;
+            animation: tokenPop 0.3s;
         }
-        @keyframes tokenAppear { to { opacity:1; transform:scale(1); } }
 
-        .probability-bars { margin:20px 0; }
-        .prob-item { display:flex; align-items:center; margin-bottom:10px; }
-        .prob-word { width:80px; font-size:0.9rem; font-weight:500; }
-        .prob-bar { flex:1; height:20px; background:#e2e8f0; border-radius:10px; overflow:hidden; margin:0 10px; }
-        .prob-fill { height:100%; background: linear-gradient(135deg,#06b6d4 0%,#0891b2 100%); border-radius:10px; width:0; transition: width 1s ease; }
-        .prob-percentage { font-size:0.8rem; color:#64748b; min-width:40px; }
-
-        .response-box { background:white; border-radius:12px; padding:25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left:4px solid #10b981; margin-top:20px; }
-        .response-text { font-size:1.1rem; line-height:1.6; color:#1e293b; margin:0; min-height:1.2rem; }
-
-        .typing-indicator { display:inline-block; width:4px; height:1.2rem; background:#10b981; animation: blink 1s infinite; margin-left:2px; }
-        @keyframes blink { 0%,50% { opacity:1; } 51%,100% { opacity:0; } }
-
-        .controls-section {
-            padding:40px; background: linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%); border-top:1px solid #e2e8f0;
-            display:none; text-align:center;
+        @keyframes tokenPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
-        .controls-section.active { display:block; }
-        .navigation-controls { margin-bottom:20px; }
+
+        .neural-network {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 30px 0;
+            position: relative;
+        }
+
+        .layer {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .layer-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .neuron {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            opacity: 0.3;
+            animation: flowRight 2s infinite;
+        }
+
+        @keyframes flowRight {
+            0% { opacity: 0.1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 0.1; }
+        }
+
+        .probability-bars {
+            margin: 20px 0;
+        }
+
+        .prob-item {
+            margin: 15px 0;
+        }
+
+        .prob-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .prob-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            transition: width 1s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .output-text {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
 
         .nav-btn {
-            background: linear-gradient(135deg,#64748b 0%,#475569 100%); color:white; border:none; padding:12px 24px; border-radius:10px;
-            cursor:pointer; font-size:1rem; font-weight:500; margin:0 10px; transition: all .3s ease; box-shadow: 0 4px 15px rgba(100,116,139,0.3);
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            flex: 1;
+            max-width: 200px;
         }
-        .nav-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(100,116,139,0.4); }
-        .nav-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; box-shadow:none; transform:none; }
 
-        .restart-btn {
-            background: linear-gradient(135deg,#6366f1 0%,#4f46e5 100%); color:white; border:none; padding:15px 30px; border-radius:10px;
-            cursor:pointer; font-size:1rem; font-weight:500; margin-top:20px; transition: all .3s ease; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        .nav-btn:hover:not(:disabled) {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-        .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
 
-        .info-section { background:white; border-radius:20px; padding:40px; box-shadow:0 20px 60px rgba(0,0,0,0.1); }
-        .info-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap:30px; }
-        .info-card { background: linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%); border-radius:15px; padding:25px; transition: transform .3s ease; }
-        .info-card:hover { transform: translateY(-5px); }
-        .info-card h3 { color:#1e293b; margin-bottom:15px; font-size:1.3rem; }
-        .info-card p { color:#64748b; line-height:1.6; }
-
-        .footer { background: linear-gradient(135deg,#1e293b 0%,#334155 100%); color:white; margin-top:40px; border-radius:20px; overflow:hidden; text-align:center; }
-        .footer-content { padding:40px; }
-        .show-references-btn {
-            background: linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%); color:white; border:none; padding:15px 30px; border-radius:12px; cursor:pointer;
-            font-size:1rem; font-weight:500; transition: all .3s ease; box-shadow: 0 4px 15px rgba(59,130,246,0.3); margin-top:30px;
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
-        .references-section { display:none; animation: fadeIn .5s ease-in-out; }
-        .references-section.active { display:block; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .info-box strong {
+            color: #1976d2;
+        }
+
+        .attention-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .attention-cell {
+            aspect-ratio: 1;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+            animation: cellPulse 1.5s infinite;
+        }
+
+        @keyframes cellPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
 
         @media (max-width: 768px) {
-            .container { padding:15px; }
-            .question-section, .processing-section, .controls-section { padding:25px; }
-            .neural-network { justify-content:center; }
-            .layer { margin: 0 10px; }
-            .arrows { display:none; }
-            .info-grid { grid-template-columns:1fr; }
-            .references-grid { grid-template-columns:1fr; }
-            .footer-content { padding:25px; }
+            h1 {
+                font-size: 2em;
+            }
+
+            .neural-network {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .question-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .navigation {
+                flex-direction: column;
+            }
+
+            .nav-btn {
+                max-width: 100%;
+            }
+        }
+
+        .thinking-animation {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>How Generative AI Works</h1>
-            <p>Discover the magic behind AI responses through this interactive simulator</p>
-        </div>
+        <header>
+            <h1>✨ How GenAI "Thinks"</h1>
+            <p class="subtitle">An Interactive Journey Through AI Processing</p>
+        </header>
 
-        <div class="simulator">
-            <div class="question-section" id="questionSection">
-                <h2>Choose a Question to Ask the AI</h2>
+        <div class="main-card">
+            <div class="question-selector">
+                <h2>Choose a Question to Explore:</h2>
                 <div class="question-buttons">
-                    <button class="question-btn" data-question="What is the capital of France?">
-                        🌍 What is the capital of France?
+                    <button class="question-btn" data-question="0">
+                        <strong>🌍 Question 1:</strong><br>
+                        "What is photosynthesis?"
                     </button>
-                    <button class="question-btn" data-question="How do plants make oxygen?">
-                        🌱 How do plants make oxygen?
+                    <button class="question-btn" data-question="1">
+                        <strong>🤖 Question 2:</strong><br>
+                        "How do neural networks learn?"
                     </button>
-                    <button class="question-btn" data-question="What causes rainbows to appear?">
-                        🌈 What causes rainbows to appear?
+                    <button class="question-btn" data-question="2">
+                        <strong>🎨 Question 3:</strong><br>
+                        "Write a haiku about coding"
                     </button>
                 </div>
             </div>
 
-            <div class="processing-section" id="processingSection">
-                <div class="step" id="step1">
+            <div class="simulation-area" id="simulationArea">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <!-- Step 1: Input Reception -->
+                <div class="step-container active" data-step="0">
                     <div class="step-header">
                         <div class="step-number">1</div>
-                        <div class="step-title">Input Processing & Tokenization</div>
+                        <h2 class="step-title">📥 Input Reception</h2>
                     </div>
                     <div class="step-content">
-                        <p>The AI breaks down your question into smaller pieces called "tokens" - think of them as the building blocks of language.</p>
-                        <div class="tokens-container" id="tokensContainer"></div>
+                        <p><strong>Your question has been received!</strong></p>
+                        <div class="output-text" id="inputQuestion"></div>
+                        <div class="info-box">
+                            <strong>What's happening:</strong> The AI receives your text input as a stream of characters. This is the raw data that will be processed through multiple layers of the neural network.
+                        </div>
                     </div>
                 </div>
 
-                <div class="step" id="step2">
+                <!-- Step 2: Tokenization -->
+                <div class="step-container" data-step="1">
                     <div class="step-header">
                         <div class="step-number">2</div>
-                        <div class="step-title">Neural Network Processing</div>
+                        <h2 class="step-title">🔤 Tokenization</h2>
                     </div>
                     <div class="step-content">
-                        <p>The tokens flow through layers of artificial neurons, each layer understanding the text at a deeper level.</p>
-                        <div class="neural-network">
-                            <div class="layer">
-                                <div class="layer-title">Input Layer</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                            <div class="arrows">
-                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
-                            </div>
-                            <div class="layer">
-                                <div class="layer-title">Hidden Layer 1</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                            <div class="arrows">
-                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
-                            </div>
-                            <div class="layer">
-                                <div class="layer-title">Hidden Layer 2</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
-                            <div class="arrows">
-                                <div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div><div class="arrow"></div>
-                            </div>
-                            <div class="layer">
-                                <div class="layer-title">Output Layer</div>
-                                <div class="nodes">
-                                    <div class="node"></div><div class="node"></div><div class="node"></div>
-                                </div>
-                            </div>
+                        <p><strong>Breaking down your question into tokens...</strong></p>
+                        <div class="visualization">
+                            <div class="tokens" id="tokenDisplay"></div>
+                        </div>
+                        <div class="info-box">
+                            <strong>What's happening:</strong> The text is broken into "tokens" - smaller units that the AI can understand. Tokens can be words, parts of words, or even punctuation. Each token is converted to a unique number (token ID) that the neural network can process.
                         </div>
                     </div>
                 </div>
 
-                <div class="step" id="step3">
+                <!-- Step 3: Neural Network Processing -->
+                <div class="step-container" data-step="2">
                     <div class="step-header">
                         <div class="step-number">3</div>
-                        <div class="step-title">Attention & Context Understanding</div>
+                        <h2 class="step-title">🧠 Neural Network Processing</h2>
                     </div>
                     <div class="step-content">
-                        <p>The AI focuses on the most important parts of your question and understands the context and relationships between words.</p>
+                        <p><strong>Processing through neural network layers...</strong></p>
+                        <div class="visualization">
+                            <div class="neural-network" id="neuralNetwork">
+                                <div class="layer">
+                                    <div class="layer-label">Input Layer</div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                </div>
+                                <div class="layer">
+                                    <div class="layer-label">Hidden Layer 1</div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                </div>
+                                <div class="layer">
+                                    <div class="layer-label">Hidden Layer 2</div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                </div>
+                                <div class="layer">
+                                    <div class="layer-label">Output Layer</div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                    <div class="neuron"></div>
+                                </div>
+                            </div>
+                            <div class="thinking-animation">
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                            </div>
+                        </div>
+                        <div class="info-box">
+                            <strong>What's happening:</strong> The tokens flow through multiple layers of artificial neurons. Each layer transforms the data, extracting increasingly abstract patterns and meanings. This is where the "thinking" happens - billions of mathematical operations per second!
+                        </div>
                     </div>
                 </div>
 
-                <div class="step" id="step4">
+                <!-- Step 4: Attention Mechanism -->
+                <div class="step-container" data-step="3">
                     <div class="step-header">
                         <div class="step-number">4</div>
-                        <div class="step-title">Response Generation</div>
+                        <h2 class="step-title">🎯 Attention & Context</h2>
                     </div>
                     <div class="step-content">
-                        <p>The AI predicts the most likely next words based on patterns learned from training data, building a response word by word.</p>
-                        <div class="probability-bars" id="probabilityBars"></div>
+                        <p><strong>Understanding relationships between words...</strong></p>
+                        <div class="visualization">
+                            <p>Attention weights (which words are most relevant):</p>
+                            <div class="attention-matrix" id="attentionMatrix"></div>
+                        </div>
+                        <div class="info-box">
+                            <strong>What's happening:</strong> The attention mechanism helps the AI understand which parts of your question are most important and how different words relate to each other. Brighter cells show stronger connections between words. This allows the AI to grasp context and meaning.
+                        </div>
                     </div>
                 </div>
 
-                <div class="step" id="step5">
+                <!-- Step 5: Response Generation -->
+                <div class="step-container" data-step="4">
                     <div class="step-header">
                         <div class="step-number">5</div>
-                        <div class="step-title">Final AI Response</div>
+                        <h2 class="step-title">📈 Probability Analysis</h2>
                     </div>
                     <div class="step-content">
-                        <p>The AI assembles its final response based on the most probable sequence of words and phrases.</p>
-                        <div class="response-box">
-                            <div class="response-text" id="responseText"></div>
+                        <p><strong>Calculating probabilities for next words...</strong></p>
+                        <div class="visualization">
+                            <div class="probability-bars" id="probabilityBars"></div>
+                        </div>
+                        <div class="info-box">
+                            <strong>What's happening:</strong> For each position in the response, the AI calculates probability scores for thousands of possible next tokens. It doesn't just pick the highest probability - it samples from the distribution to create natural, varied responses.
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="controls-section" id="controlsSection">
-                <div class="navigation-controls">
-                    <button class="nav-btn" id="prevBtn" onclick="navigateSteps(-1)" disabled>← Previous Step</button>
-                    <button class="nav-btn" id="nextBtn" onclick="navigateSteps(1)" disabled>Next Step →</button>
-                </div>
-                <button class="restart-btn" onclick="restartSimulation()">Try Another Question</button>
-            </div>
-        </div>
-
-        <div class="info-section">
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>🧠 Machine Learning</h3>
-                    <p>AI systems learn patterns from vast amounts of text data, similar to how humans learn language through exposure and practice.</p>
-                </div>
-                <div class="info-card">
-                    <h3>🔗 Deep Learning</h3>
-                    <p>Multiple layers of artificial neurons work together to understand complex patterns and relationships in language.</p>
-                </div>
-                <div class="info-card">
-                    <h3>⚡ Neural Networks</h3>
-                    <p>Inspired by the human brain, these networks process information through interconnected nodes that strengthen important connections.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <div class="footer-content">
-                <div class="footer-note">
-                    <p><strong>Note:</strong> This simulator provides a simplified visualization of how generative AI works. Actual AI systems are significantly more complex, involving billions of parameters and sophisticated training processes.</p>
-                    <p class="copyright">© 2025 Interactive AI Learning Simulator. Created for educational purposes.</p>
-                </div>
-
-                <button class="show-references-btn" onclick="toggleReferences()">
-                    📚 Show References & Further Reading
-                </button>
-
-                <div class="references-section" id="referencesSection">
-                    <h3>References & Further Reading</h3>
-                    <div class="references-grid">
-                        <div class="reference-category">
-                            <h4>🧠 Neural Networks & Deep Learning</h4>
-                            <ul>
-                                <li>Goodfellow, I., Bengio, Y., & Courville, A. (2016). <em>Deep Learning</em>. MIT Press.</li>
-                                <li>Nielsen, M. (2015). <em>Neural Networks and Deep Learning</em>. Determination Press.</li>
-                                <li>LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. <em>Nature</em>, 521(7553), 436-444.</li>
-                            </ul>
-                        </div>
-                        <div class="reference-category">
-                            <h4>🤖 Generative AI & Language Models</h4>
-                            <ul>
-                                <li>Vaswani, A., et al. (2017). Attention is all you need. <em>Advances in Neural Information Processing Systems</em>.</li>
-                                <li>Brown, T., et al. (2020). Language models are few-shot learners. <em>Advances in Neural Information Processing Systems</em>.</li>
-                                <li>OpenAI (2023). GPT-4 Technical Report. arXiv preprint arXiv:2303.08774.</li>
-                            </ul>
-                        </div>
-                        <div class="reference-category">
-                            <h4>📚 Educational Resources</h4>
-                            <ul>
-                                <li>Stanford CS229: <a href="https://cs229.stanford.edu/" target="_blank">Machine Learning Course</a></li>
-                                <li>MIT 6.034: <a href="https://ocw.mit.edu/courses/6-034-artificial-intelligence-fall-2010/" target="_blank">Artificial Intelligence</a></li>
-                                <li>Coursera: <a href="https://www.coursera.org/learn/machine-learning" target="_blank">Machine Learning by Andrew Ng</a></li>
-                                <li>3Blue1Brown: <a href="https://www.3blue1brown.com/topics/neural-networks" target="_blank">Neural Networks Explained</a></li>
-                            </ul>
+                <!-- Step 6: Final Output -->
+                <div class="step-container" data-step="5">
+                    <div class="step-header">
+                        <div class="step-number">6</div>
+                        <h2 class="step-title">✅ Generated Response</h2>
+                    </div>
+                    <div class="step-content">
+                        <p><strong>Complete response:</strong></p>
+                        <div class="output-text" id="finalOutput"></div>
+                        <div class="info-box">
+                            <strong>What happened:</strong> The AI has processed your question through multiple stages: tokenization, neural network processing, attention mechanisms, and probability-based generation. Each response is unique, generated one token at a time based on patterns learned from vast amounts of training data.
                         </div>
                     </div>
+                </div>
+
+                <div class="navigation">
+                    <button class="nav-btn" id="prevBtn" onclick="previousStep()">← Previous</button>
+                    <button class="nav-btn" id="nextBtn" onclick="nextStep()">Next →</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Global variables
-        let currentQuestion = "";
-        let currentStep = 0;
-        const totalSteps = 5;
-
-        // Track timeouts/intervals so we can clear them when restarting
-        let simTimeouts = [];
-        let simIntervals = [];
-
-        // Question data (kept concise / complete)
-        const questions = {
-            "What is the capital of France?": {
-                tokens: ["What","is","the","capital","of","France","?"],
-                response: "The capital of France is Paris. Paris is known for its rich history, art, culture, and iconic landmarks like the Eiffel Tower and the Louvre.",
+        const questions = [
+            {
+                question: "What is photosynthesis?",
+                tokens: ["What", "is", "photo", "syn", "thesis", "?"],
+                response: "Photosynthesis is the process by which plants convert light energy into chemical energy. Using sunlight, water, and carbon dioxide, plants produce glucose and oxygen. This remarkable process occurs in chloroplasts and is essential for life on Earth.",
                 probabilities: [
-                    { word: "The", prob: 85 },
-                    { word: "Paris", prob: 92 },
-                    { word: "is", prob: 78 },
-                    { word: "located", prob: 45 }
+                    { word: "Photosynthesis", prob: 95 },
+                    { word: "Plants", prob: 82 },
+                    { word: "It", prob: 68 },
+                    { word: "The", prob: 55 },
+                    { word: "This", prob: 41 }
                 ]
             },
-            "How do plants make oxygen?": {
-                tokens: ["How","do","plants","make","oxygen","?"],
-                response: "Plants make oxygen through photosynthesis, converting sunlight, carbon dioxide, and water into glucose and oxygen using chlorophyll.",
+            {
+                question: "How do neural networks learn?",
+                tokens: ["How", "do", "neural", "networks", "learn", "?"],
+                response: "Neural networks learn through a process called backpropagation. They start with random weights, make predictions, calculate errors, and adjust weights to minimize those errors. This iterative process, repeated millions of times with training data, allows the network to recognize patterns and make accurate predictions.",
                 probabilities: [
-                    { word: "Plants", prob: 88 },
-                    { word: "make", prob: 76 },
-                    { word: "oxygen", prob: 94 },
-                    { word: "through", prob: 82 }
+                    { word: "Neural", prob: 92 },
+                    { word: "They", prob: 85 },
+                    { word: "Through", prob: 73 },
+                    { word: "Learning", prob: 61 },
+                    { word: "By", prob: 48 }
                 ]
             },
-            "What causes rainbows to appear?": {
-                tokens: ["What","causes","rainbows","to","appear","?"],
-                response: "Rainbows form when sunlight refracts, reflects, and disperses in water droplets, splitting light into its component colors.",
+            {
+                question: "Write a haiku about coding",
+                tokens: ["Write", "a", "haiku", "about", "coding"],
+                response: "Lines of code cascade\nLogic blooms in binary\nCreation takes form",
                 probabilities: [
-                    { word: "Rainbows", prob: 91 },
-                    { word: "appear", prob: 73 },
-                    { word: "when", prob: 86 },
-                    { word: "sunlight", prob: 89 }
+                    { word: "Lines", prob: 78 },
+                    { word: "Code", prob: 85 },
+                    { word: "Silent", prob: 72 },
+                    { word: "Binary", prob: 69 },
+                    { word: "Functions", prob: 56 }
                 ]
             }
-        };
+        ];
 
-        // Helper: clear pending simulation timers/intervals
-        function clearSimTimers() {
-            simTimeouts.forEach(id => clearTimeout(id));
-            simTimeouts = [];
-            simIntervals.forEach(id => clearInterval(id));
-            simIntervals = [];
-        }
+        let currentQuestion = null;
+        let currentStep = 0;
+        const totalSteps = 6;
 
-        // Reset neural visualization state
-        function resetNeuralNetwork() {
-            const nodes = document.querySelectorAll('.layer .node');
-            nodes.forEach(n => n.classList.remove('active'));
-            const arrows = document.querySelectorAll('.arrows');
-            arrows.forEach(a => a.classList.remove('active'));
-        }
-
-        // Event listeners for question buttons
+        // Question selection
         document.querySelectorAll('.question-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                currentQuestion = this.dataset.question;
+                document.querySelectorAll('.question-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentQuestion = parseInt(this.dataset.question);
+                currentStep = 0;
                 startSimulation();
             });
         });
 
         function startSimulation() {
-            // Ensure previous timers cleared before starting
-            clearSimTimers();
-
-            document.getElementById('questionSection').style.display = 'none';
-            document.getElementById('processingSection').classList.add('active');
-            document.getElementById('controlsSection').classList.add('active');
-
-            currentStep = 0;
-            updateNavigationButtons();
-
-            const questionData = questions[currentQuestion];
-            if (!questionData) {
-                console.warn('No question data for:', currentQuestion);
-                return;
-            }
-
-            // Step sequencing with tracked timeouts
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 1;
-                updateNavigationButtons();
-                document.getElementById('step1').classList.add('active');
-                showTokens(questionData.tokens);
-            }, 500));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 2;
-                updateNavigationButtons();
-                document.getElementById('step2').classList.add('active');
-                animateNeuralNetwork();
-            }, 2000));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 3;
-                updateNavigationButtons();
-                document.getElementById('step3').classList.add('active');
-            }, 4000));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 4;
-                updateNavigationButtons();
-                document.getElementById('step4').classList.add('active');
-                showProbabilities(questionData.probabilities);
-            }, 5500));
-
-            simTimeouts.push(setTimeout(() => {
-                currentStep = 5;
-                updateNavigationButtons();
-                document.getElementById('step5').classList.add('active');
-                typeResponse(questionData.response);
-            }, 8000));
+            const simArea = document.getElementById('simulationArea');
+            simArea.classList.add('active');
+            
+            const q = questions[currentQuestion];
+            document.getElementById('inputQuestion').textContent = q.question;
+            
+            updateStep();
+            scrollToSimulation();
         }
 
-        function showTokens(tokens) {
-            const container = document.getElementById('tokensContainer');
-            container.innerHTML = '';
-            tokens.forEach((token, index) => {
-                simTimeouts.push(setTimeout(() => {
-                    const tokenEl = document.createElement('div');
-                    tokenEl.className = 'token';
-                    tokenEl.textContent = token;
-                    tokenEl.style.animationDelay = `${index * 0.1}s`;
-                    container.appendChild(tokenEl);
-                }, index * 200));
+        function updateStep() {
+            // Hide all steps
+            document.querySelectorAll('.step-container').forEach(step => {
+                step.classList.remove('active');
             });
+
+            // Show current step
+            document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
+
+            // Update progress bar
+            const progress = ((currentStep + 1) / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === totalSteps - 1;
+
+            // Load step-specific content
+            loadStepContent();
         }
 
-        function animateNeuralNetwork() {
-            const layers = document.querySelectorAll('.layer');
-            const arrows = document.querySelectorAll('.arrows');
+        function loadStepContent() {
+            const q = questions[currentQuestion];
 
-            layers.forEach((layer, layerIndex) => {
-                simTimeouts.push(setTimeout(() => {
-                    const nodes = layer.querySelectorAll('.node');
-                    nodes.forEach((node, nodeIndex) => {
-                        simTimeouts.push(setTimeout(() => {
-                            node.classList.add('active');
-                        }, nodeIndex * 100));
-                    });
-
-                    if (layerIndex < arrows.length) {
-                        simTimeouts.push(setTimeout(() => {
-                            arrows[layerIndex].classList.add('active');
-                        }, 300));
+            if (currentStep === 1) {
+                // Tokenization
+                const tokenDisplay = document.getElementById('tokenDisplay');
+                tokenDisplay.innerHTML = '';
+                q.tokens.forEach((token, index) => {
+                    setTimeout(() => {
+                        const tokenEl = document.createElement('div');
+                        tokenEl.className = 'token';
+                        tokenEl.textContent = token;
+                        tokenDisplay.appendChild(tokenEl);
+                    }, index * 200);
+                });
+            } else if (currentStep === 3) {
+                // Attention matrix
+                const attentionMatrix = document.getElementById('attentionMatrix');
+                attentionMatrix.innerHTML = '';
+                q.tokens.forEach((token, i) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'attention-cell';
+                    const intensity = Math.random();
+                    const hue = 240 + (intensity * 30);
+                    const lightness = 30 + (intensity * 40);
+                    cell.style.background = `hsl(${hue}, 70%, ${lightness}%)`;
+                    cell.textContent = token;
+                    cell.style.animationDelay = (i * 0.1) + 's';
+                    attentionMatrix.appendChild(cell);
+                });
+            } else if (currentStep === 4) {
+                // Probability bars
+                const probBars = document.getElementById('probabilityBars');
+                probBars.innerHTML = '';
+                q.probabilities.forEach((item, index) => {
+                    setTimeout(() => {
+                        const probItem = document.createElement('div');
+                        probItem.className = 'prob-item';
+                        probItem.innerHTML = `
+                            <div class="prob-label">
+                                <span>${item.word}</span>
+                                <span>${item.prob}%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <div class="prob-fill" style="width: ${item.prob}%"></div>
+                            </div>
+                        `;
+                        probBars.appendChild(probItem);
+                    }, index * 300);
+                });
+            } else if (currentStep === 5) {
+                // Final output
+                const output = document.getElementById('finalOutput');
+                output.textContent = '';
+                let i = 0;
+                const text = q.response;
+                const typeInterval = setInterval(() => {
+                    if (i < text.length) {
+                        output.textContent += text[i];
+                        i++;
+                    } else {
+                        clearInterval(typeInterval);
                     }
-                }, layerIndex * 600));
+                }, 30);
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps - 1) {
+                currentStep++;
+                updateStep();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateStep();
+            }
+        }
+
+        function scrollToSimulation() {
+            document.getElementById('simulationArea').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
             });
         }
 
-        function showProbabilities(probs) {
-            const container = document.getElementById('probabilityBars');
-            container.innerHTML = '<p style="margin-bottom: 15px; color: #64748b;">Probability of next words:</p>';
-
-            probs.forEach((prob, index) => {
-                simTimeouts.push(setTimeout(() => {
-                    const probItem = document.createElement('div');
-                    probItem.className = 'prob-item';
-                    probItem.innerHTML = `
-                        <div class="prob-word">${prob.word}</div>
-                        <div class="prob-bar">
-                            <div class="prob-fill"></div>
-                        </div>
-                        <div class="prob-percentage">${prob.prob}%</div>
-                    `;
-                    container.appendChild(probItem);
-
-                    simTimeouts.push(setTimeout(() => {
-                        const fill = probItem.querySelector('.prob-fill');
-                        if (fill) fill.style.width = `${prob.prob}%`;
-                    }, 100));
-                }, index * 300));
-            });
-        }
-
-        function typeResponse(response) {
-            const responseEl = document.getElementById('responseText');
-            responseEl.innerHTML = '<span class="typing-indicator"></span>';
-
-            let index = 0;
-            const typeInterval = setInterval(() => {
-                if (index < response.length) {
-                    responseEl.textContent = response.slice(0, index + 1);
-                    const cursor = document.createElement('span');
-                    cursor.className = 'typing-indicator';
-                    responseEl.appendChild(cursor);
-                    index++;
-                } else {
-                    clearInterval(typeInterval);
-                    responseEl.textContent = response;
-                }
-            }, 50);
-
-            simIntervals.push(typeInterval);
-        }
-
-        // Defensive restartSimulation implementation
-        function restartSimulation() {
-            try {
-                // 1) Clear timers/intervals to stop in-flight animations/typing
-                clearSimTimers();
-
-                // 2) Reset step state and visuals
-                currentStep = 0;
-                for (let i = 1; i <= totalSteps; i++) {
-                    const el = document.getElementById(`step${i}`);
-                    if (el) el.classList.remove('active');
-                }
-                resetNeuralNetwork();
-
-                // 3) Clear tokens/probabilities/response
-                const tokensContainer = document.getElementById('tokensContainer');
-                if (tokensContainer) tokensContainer.innerHTML = '';
-                const probContainer = document.getElementById('probabilityBars');
-                if (probContainer) probContainer.innerHTML = '';
-                const responseEl = document.getElementById('responseText');
-                if (responseEl) responseEl.textContent = '';
-
-                // 4) Reset navigation UI and show question list
-                const qSection = document.getElementById('questionSection');
-                const pSection = document.getElementById('processingSection');
-                const cSection = document.getElementById('controlsSection');
-                if (qSection) qSection.style.display = '';
-                if (pSection) pSection.classList.remove('active');
-                if (cSection) cSection.classList.remove('active');
-
-                updateNavigationButtons();
-                const prevBtn = document.getElementById('prevBtn');
-                const nextBtn = document.getElementById('nextBtn');
-                if (prevBtn) prevBtn.disabled = true;
-                if (nextBtn) nextBtn.disabled = true;
-
-                // 5) Try to auto-select a different question button (wrap-around)
-                const questionBtns = Array.from(document.querySelectorAll('.question-btn'));
-                if (questionBtns.length) {
-                    const currentIndex = questionBtns.findIndex(b => b.dataset.question === currentQuestion);
-                    const nextIndex = questionBtns.length > 1 ? (currentIndex + 1) % questionBtns.length : 0;
-                    const chosen = questionBtns[nextIndex];
-                    if (chosen) {
-                        // Update selection and trigger click so existing handlers run
-                        currentQuestion = chosen.dataset.question || currentQuestion;
-                        chosen.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-                        // Safety: call startSimulation after a tiny delay if click handler didn't run it
-                        simTimeouts.push(setTimeout(() => {
-                            if (typeof startSimulation === 'function') startSimulation();
-                        }, 50));
-                        return;
-                    }
-                }
-
-                // If no automatic selection, leave question list visible for manual pick.
-                return;
-            } catch (err) {
-                console.error('restartSimulation error', err);
-                // Last-resort fallback: reload page
-                location.reload();
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('simulationArea').classList.contains('active')) {
+                if (e.key === 'ArrowRight') nextStep();
+                if (e.key === 'ArrowLeft') previousStep();
             }
-        }
-
-        function navigateSteps(direction) {
-            const newStep = currentStep + direction;
-            if (newStep < 0 || newStep > totalSteps) return;
-
-            // Hide current step
-            if (currentStep > 0) {
-                const prevEl = document.getElementById(`step${currentStep}`);
-                if (prevEl) prevEl.classList.remove('active');
-            }
-
-            currentStep = newStep;
-            updateNavigationButtons();
-
-            // Show new step
-            if (currentStep > 0) {
-                document.getElementById(`step${currentStep}`).classList.add('active');
-
-                // Re-trigger animations/content for specific steps
-                const questionData = questions[currentQuestion];
-
-                if (currentStep === 1) {
-                    showTokens(questionData.tokens);
-                } else if (currentStep === 2) {
-                    // Reset and re-animate neural network
-                    resetNeuralNetwork();
-                    animateNeuralNetwork();
-                } else if (currentStep === 4) {
-                    showProbabilities(questionData.probabilities);
-                } else if (currentStep === 5) {
-                    typeResponse(questionData.response);
-                }
-            }
-        }
-
-        function updateNavigationButtons() {
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-
-            if (!prevBtn || !nextBtn) return;
-
-            prevBtn.disabled = currentStep <= 1;
-            nextBtn.disabled = currentStep >= totalSteps;
-
-            if (currentStep === 0) {
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-            }
-        }
-
-        // toggleReferences helper
-        function toggleReferences() {
-            const el = document.getElementById('referencesSection');
-            if (!el) return;
-            el.classList.toggle('active');
-        }
-
-        // Ensure initial nav state
-        updateNavigationButtons();
+        });
     </script>
 </body>
 </html>
